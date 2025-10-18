@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>CafeDuo — Kafede İkili Mini Oyunlar</title>
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="stylesheet" href="/css/styles.css"/>
+  <script defer src="/socket.io/socket.io.js"></script>
+  <script defer type="module" src="/js/app.js"></script>
+</head>
+<body>
+  <header>
+    <div class="container nav">
+      <div class="brand"><span class="cup" aria-hidden="true"></span> CafeDuo</div>
+      <nav class="nav-links">
+        <a href="#oyunlar">Oyunlar</a>
+        <a href="#checkin">QR Check‑in</a>
+        <button id="btnLogin" class="btn btn-primary">Giriş Yap</button>
+      </nav>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div class="container">
+      <h1>Kafede <br/> Arkadaşınla Oyna</h1>
+      <p>QR ile masana bağlan, istek gönder, yönetici onayıyla 20–60 sn süren mini oyunlarda kapış.<br/>
+      Puanlar liderlik tablosuna yazılır.</p>
+      <div class="row" style="justify-content:center; gap:10px; margin-top:10px;">
+        <a class="btn btn-primary" href="#oyunlar">Hemen Oyna</a>
+        <a class="btn btn-ghost" href="#checkin">Önce Check‑in Yap</a>
+        <span class="badge">PWA • Çevrimdışı Destek</span>
+      </div>
+    </div>
+  </section>
+
+  <section id="oyunlar" class="section">
+    <div class="container">
+      <h2>Popüler Oyunlar</h2>
+      <div class="grid">
+        <div class="card">
+          <h3>Refleks Düellosu (BO5)</h3>
+          <p class="small">Rastgele bir anda <b>GO!</b> görünce ilk dokunan raundu alır. 5 turda 3 olan kazanır.</p>
+          <div class="row">
+            <button class="btn btn-primary" data-game="reflex" id="btnReqReflex">İstek Gönder</button>
+            <button class="btn btn-ghost" data-game="reflex" id="btnAcceptReflex">İstekleri Gör & Kabul Et</button>
+          </div>
+        </div>
+        <div class="card">
+          <h3>Hızlı Aritmetik (5 soru)</h3>
+          <p class="small">Toplama‑çıkarma‑çarpma karışık 5 soru. Doğru sayısı yüksek olan kazanır.</p>
+          <div class="row">
+            <button class="btn btn-primary" data-game="math" id="btnReqMath">İstek Gönder</button>
+            <button class="btn btn-ghost" data-game="math" id="btnAcceptMath">İstekleri Gör & Kabul Et</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="checkin" class="section">
+    <div class="container">
+      <h2>QR Check‑in</h2>
+      <div class="grid">
+        <div class="card">
+          <h3>Masana Bağlan</h3>
+          <p class="small">Kafedeki QR kodu okutun veya tokenı yazın: <code>TABLE-A1-TOKEN</code> gibi.</p>
+          <div class="row">
+            <input id="qrToken" class="input" placeholder="QR token">
+            <button id="btnCheckIn" class="btn btn-primary">Check‑in</button>
+          </div>
+          <p id="checkinInfo" class="small"></p>
+        </div>
+        <div class="card">
+          <h3>Eşleşme İstekleri</h3>
+          <p class="small">Kafedeki herkese açık isteklere buradan katılabilirsiniz.</p>
+          <table class="table" id="tblRequests">
+            <thead><tr><th>ID</th><th>Oyun</th><th>Masa</th><th>Durum</th><th>Aksiyon</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div id="toast" class="toast">Hazır.</div>
+</body>
+</html>

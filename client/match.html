@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Maç — CafeDuo</title>
+  <link rel="stylesheet" href="/css/styles.css"/>
+  <script defer src="/socket.io/socket.io.js"></script>
+  <script defer type="module">
+    import { connectSocket } from './js/socket.js';
+    const url = new URL(location.href);
+    const game = url.searchParams.get('game');
+    const matchId = Number(url.searchParams.get('match'));
+    document.getElementById('info').textContent = `Maç #${matchId} — ${game}`;
+    const socket = connectSocket();
+    socket.emit('joinMatch', { match_id: matchId });
+
+    if(game === 'reflex'){
+      import('/js/games/refleks.js').then(m => m.mount({socket, matchId}));
+    } else {
+      import('/js/games/aritmetik.js').then(m => m.mount({socket, matchId}));
+    }
+  </script>
+</head>
+<body>
+  <div class="container" style="padding:24px 0">
+    <h2 id="info">Maç</h2>
+    <div id="gameRoot" class="card"></div>
+  </div>
+  <div id="toast" class="toast">Hazır</div>
+</body>
+</html>

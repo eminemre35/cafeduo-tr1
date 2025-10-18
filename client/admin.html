@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Admin — CafeDuo</title>
+  <link rel="stylesheet" href="/css/styles.css"/>
+  <script defer src="/socket.io/socket.io.js"></script>
+  <script defer type="module">
+    const keyInput = document.getElementById('key');
+    const listEl = document.getElementById('list');
+    const toast = (m)=>{ const t=document.getElementById('toast'); t.textContent=m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),1500); };
+
+    async function fetchPending(){
+      const key = keyInput.value.trim();
+      const res = await fetch('/admin/requests', { headers: {'x-admin-key': key }});
+      if(!res.ok){ listEl.innerHTML = '<tr><td colspan="5">Yetkisiz</td></tr>'; return; }
+      const rows = await res.json();
+      listEl.innerHTML = rows.map(r=>`<tr>
+        <td>${r.id}</td><td>${r.game_type}</td><td>${r.from_table_id}→${r.accepted_table_id}</td><td>${r.status}</td>
+        <td>
+          <button data-id="${r.id}" data-act="approve" class="btn btn-primary">Onayla</button>
+          <button data-id="${r.id}" data-act="deny" class="btn btn-ghost">Reddet</button>
+        </td></tr>`).join('');
+    }
+
+    document.getElementById('btnLoad').addEventListener('click', fetchPending);
+    document.getElementById('list').addEventListener('click', async (e)=>{
+      const b = e.target.closest('button'); if(!b) return;
+      const id = b.getAttribute('data-id'); const act=b.getAttribute('data-act');
+      const key = keyInput.value.trim();
+      const res = await fetch(`/admin/requests/${id}/${act}`, {method:'POST', headers:{'x-admin-key':key}});
+      if(res.ok){ toast('Güncellendi'); fetchPending(); } else { toast('Hata'); }
+    });
+  </script>
+</head>
+<body>
+  <div class="container" style="padding:24px 0">
+    <h1>Admin Panel</h1>
+    <div class="row" style="margin:10px 0">
+      <input id="key" class="input" placeholder="Admin Key (ENV: ADMIN_KEY)">
+      <button id="btnLoad" class="btn btn-primary">Bekleyenleri Getir</button>
+    </div>
+    <table class="table">
+      <thead><tr><th>ID</th><th>Oyun</th><th>Masalar</th><th>Durum</th><th>Aksiyon</th></tr></thead>
+      <tbody id="list"></tbody>
+    </table>
+  </div>
+  <div id="toast" class="toast">Hazır</div>
+</body>
+</html>
