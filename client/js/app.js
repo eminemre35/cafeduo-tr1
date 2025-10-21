@@ -21,6 +21,7 @@ async function api(path, opts={}){
 let socket;
 let cafeId = null;
 let sessionId = null;
+let requestFilterGame = null;
 const requestTimers = new Map();
 
 window.addEventListener('load', async ()=>{
@@ -35,8 +36,10 @@ window.addEventListener('load', async ()=>{
   // Butonlar
   document.getElementById('btnReqReflex').addEventListener('click', ()=>createRequest('reflex'));
   document.getElementById('btnReqMath').addEventListener('click', ()=>createRequest('math'));
-  document.getElementById('btnAcceptReflex').addEventListener('click', ()=>loadRequests());
-  document.getElementById('btnAcceptMath').addEventListener('click', ()=>loadRequests());
+  document.getElementById('btnAcceptReflex').addEventListener('click', ()=>loadRequests({ gameType: 'reflex' }));
+  document.getElementById('btnAcceptMath').addEventListener('click', ()=>loadRequests({ gameType: 'math' }));
+
+  updateRequestFilterUI();
 
   // Socket
   socket = connectSocket();
@@ -67,6 +70,7 @@ async function onCheckIn(){
     socket.emit('joinCafe', { cafe_id });
     document.getElementById('checkinInfo').textContent = `Kafe: ${cafe_name} • Masa ID: ${table_id} • Oturum: ${sessionId}`;
     toast('Masanıza bağlandınız');
+    await loadRequests();
   }catch(e){ toast(e.message); }
 }
 
@@ -84,6 +88,10 @@ function shouldDisplayRequest(r){
 }
 
 function addOrUpdateRequestRow(r, { prepend = true } = {}){
+  if(!matchesActiveFilter(r)){
+    removeRequestRow(r.id);
+    return;
+  }
   if(!shouldDisplayRequest(r)){
     removeRequestRow(r.id);
     return;
@@ -179,23 +187,47 @@ function removeRequestRow(id){
   if(tr) tr.remove();
 }
 
+function matchesActiveFilter(r){
+  return !requestFilterGame || r.game_type === requestFilterGame;
+}
+
 function resetRequestTable(){
   requestTimers.forEach((timerId)=>window.clearInterval(timerId));
   requestTimers.clear();
   document.querySelector('#tblRequests tbody').innerHTML = '';
 }
 
-async function loadRequests(){
+async function loadRequests(opts = {}){
   if(!getToken()) return toast('Önce giriş yapın');
   try{
+    if(Object.prototype.hasOwnProperty.call(opts, 'gameType')){
+      requestFilterGame = opts.gameType || null;
+      updateRequestFilterUI();
+    }
     const params = new URLSearchParams();
     if(cafeId) params.set('cafe_id', cafeId);
     const qs = params.toString();
     const { requests } = await api(`/game-requests${qs ? `?${qs}` : ''}`);
     resetRequestTable();
-    requests.forEach((request)=> addOrUpdateRequestRow(request, { prepend: false }));
-    toast(requests.length ? 'İstek listesi güncellendi' : 'Şu anda açık istek yok');
+    const visible = requests.filter(matchesActiveFilter);
+    visible.forEach((request)=> addOrUpdateRequestRow(request, { prepend: false }));
+    toast(visible.length ? 'İstek listesi güncellendi' : 'Şu anda uygun istek yok');
   }catch(e){ toast(e.message); }
+}
+
+function updateRequestFilterUI(){
+  const buttons = [
+    { id: 'btnAcceptReflex', game: 'reflex' },
+    { id: 'btnAcceptMath', game: 'math' }
+  ];
+  buttons.forEach(({ id, game })=>{
+    const btn = document.getElementById(id);
+    if(!btn) return;
+    const active = requestFilterGame === game;
+    btn.classList.toggle('btn-primary', active);
+    btn.classList.toggle('btn-ghost', !active);
+    btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+  });
 }
 
 async function acceptRequest(id){
