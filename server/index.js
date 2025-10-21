@@ -89,6 +89,24 @@ app.get('/games', (_req,res)=>{
   ]);
 });
 
+// İstekleri listele
+app.get('/game-requests', auth, async (req,res)=>{
+  const { cafe_id: cafeIdRaw } = req.query || {};
+  const params = [];
+  const conditions = [`status IN ('PENDING','AWAIT_ADMIN')`];
+  const expiryExpr = `CASE WHEN status='AWAIT_ADMIN' THEN admin_expires_at ELSE expires_at END`;
+  conditions.push(`(${expiryExpr} IS NULL OR ${expiryExpr} > now())`);
+  if(cafeIdRaw){
+    const cafeId = Number(cafeIdRaw);
+    if(Number.isNaN(cafeId)) return res.status(400).json({ error: 'geçersiz cafe_id' });
+    params.push(cafeId);
+    conditions.unshift(`cafe_id=$${params.length}`);
+  }
+  const where = conditions.length ? 'WHERE ' + conditions.join(' AND ') : '';
+  const { rows } = await query(`SELECT * FROM game_requests ${where} ORDER BY id DESC LIMIT 50`, params);
+  res.json({ requests: rows });
+});
+
 // İstek oluştur
 app.post('/game-requests', auth, async (req,res)=>{
   const { game_type, session_id } = req.body || {};
